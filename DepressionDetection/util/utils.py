@@ -1,34 +1,9 @@
 base_directory = "data"
-# all_files = [
-#     'TRANSCRIPT.csv',
-#     'AUDIO.wav',
-#     'FORMANT.csv',
-#     'COVAREP.csv',
-#     'CLNF_gaze.txt',
-#     'CLNF_AUs.txt',
-#     'CLNF_hog.bin',
-#     'CLNF_features.txt',
-#     'CLNF_pose.txt',
-#     'CLNF_features3D.txt'
-# ]
-# text_files = [
-#     'TRANSCRIPT.csv',
-# ]
-# audio_files = [
-#     'AUDIO.wav',
-#     'FORMANT.csv',
-#     'COVAREP.csv'
-# ]
-# face_files = [
-#     'CLNF_gaze.txt',
-#     'CLNF_AUs.txt',
-#     'CLNF_hog.bin',
-#     'CLNF_features.txt',
-#     'CLNF_pose.txt',
-#     'CLNF_features3D.txt'
-# ]
 import os
 import pandas as pd
+import util.pp_text as pp_text
+import util.pp_audio as pp_audio
+import util.pp_face as pp_face
 
 
 # Function to retrieve the necessary files
@@ -133,11 +108,6 @@ def append_PHQ_Binary(df):
     df.drop(columns=["Participant_ID"], inplace=True)
     df.dropna(subset=["PHQ_Binary"], inplace=True)
     return df
-
-
-import util.pp_text as pp_text
-import util.pp_audio as pp_audio
-import util.pp_face as pp_face
 
 
 def get_feature_subset_df(path_map):
