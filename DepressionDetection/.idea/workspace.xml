@@ -54,7 +54,7 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.editor&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -110,6 +110,8 @@
       <workItem from="1732987896948" duration="33382000" />
       <workItem from="1735392920975" duration="3000" />
       <workItem from="1735392928907" duration="43015000" />
+      <workItem from="1738341206823" duration="2664000" />
+      <workItem from="1738348941249" duration="36000" />
     </task>
     <task id="LOCAL-00001" summary="project init &amp; text model setup">
       <option name="closed" value="true" />
