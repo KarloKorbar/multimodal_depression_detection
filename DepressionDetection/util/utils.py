@@ -169,7 +169,7 @@ def get_text(percentage=0, random_state=42):
 
 def get_audio(percentage=0, random_state=42, ds_freq="50ms", rw_size="10s"):
     audio_features = [
-        # 'AUDIO.wav',
+        'AUDIO.wav',
         "FORMANT.csv",
         "COVAREP.csv",
     ]
@@ -209,7 +209,7 @@ def get_face(percentage=0, random_state=42, ds_freq="50ms", rw_size="10s"):
     face_features = [
         "CLNF_gaze.txt",
         "CLNF_AUs.txt",
-        # 'CLNF_hog.bin',
+        "CLNF_hog.bin",
         "CLNF_features.txt",
         "CLNF_pose.txt",
         "CLNF_features3D.txt",
@@ -223,7 +223,7 @@ def get_face(percentage=0, random_state=42, ds_freq="50ms", rw_size="10s"):
         columns=[
             col
             for col in df.columns
-            if any(substring in col for substring in ["frame", "confidence", "success"])
+            if any(substring in col for substring in ["frame", "confidence", "success", "is_valid"]) # TODO: check if is_valid is needed
         ]
     )
     # Handle duplicate timestamp columns
@@ -244,9 +244,7 @@ def get_face(percentage=0, random_state=42, ds_freq="50ms", rw_size="10s"):
     # Applying a rolling window to smooth out the data
     df_smoothed = (
         df_resampled.groupby(level="ID")
-        .rolling(
-            rw_size, on=df_resampled.index.get_level_values("TIMESTAMP"), min_periods=3
-        )
+        .rolling(rw_size, on=df_resampled.index.get_level_values("TIMESTAMP"))
         .mean()
         .reset_index(level=0, drop=True)
     )

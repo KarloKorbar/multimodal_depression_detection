@@ -53,11 +53,12 @@ def read_hog(filename, batch_size=5000):
         is_valid = all_feature_vectors[:, 0]
         hog_features = all_feature_vectors[:, 1:]
 
-        # Create DataFrame
-        df = pd.DataFrame({
-            'is_valid': is_valid,
-            'hog_features': list(hog_features)  # Store each row as a list in a DataFrame cell
-        })
+        # Create column names for each HOG feature
+        feature_columns = [f'hog_feature_{i}' for i in range(hog_features.shape[1])]
+        
+        # Create DataFrame with individual columns for each feature
+        df = pd.DataFrame(hog_features, columns=feature_columns)
+        df['is_valid'] = is_valid
 
         return df
 
@@ -70,7 +71,10 @@ def preprocess_CLNF_AUs(path): # good
     return au_df
 
 def preprocess_CLNF_hog(path): #TODO: 300 is .txt when it should be .bin
+    # NOTE: works, but god is it slow
     df = read_hog(path)
+    # Add timestamps at 33.333ms intervals (30 fps)
+    df['timestamp'] = pd.Series(np.arange(len(df)) * 0.033333)
     return df
 
 def preprocess_CLNF_features(path):  # good
