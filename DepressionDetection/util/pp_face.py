@@ -54,7 +54,7 @@ def read_hog(filename, batch_size=5000):
         hog_features = all_feature_vectors[:, 1:]
 
         # Create column names for each HOG feature
-        feature_columns = [f'hog_feature_{i}' for i in range(hog_features.shape[1])]
+        feature_columns = [f'feature_{i}' for i in range(hog_features.shape[1])]
         
         # Create DataFrame with individual columns for each feature
         df = pd.DataFrame(hog_features, columns=feature_columns)
