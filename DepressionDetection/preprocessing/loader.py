@@ -1,18 +1,18 @@
 import os
 import pandas as pd
 from typing import List, Optional, Dict, Tuple, Any
-import data_load.pp_text as pp_text
-import data_load.pp_audio as pp_audio
-import data_load.pp_face as pp_face
+import preprocessing.pp_text as pp_text
+import preprocessing.pp_audio as pp_audio
+import preprocessing.pp_face as pp_face
 
 
 class DataLoader:
-    def __init__(self, base_directory: str = "data"):
+    def __init__(self, base_directory: str = "data_input"):
         self.base_directory = base_directory
         self.phq_paths = [
-            "testing/dev_split_Depression_AVEC2017.csv",
-            "testing/full_test_split.csv",
-            "testing/train_split_Depression_AVEC2017.csv",
+            "data_output/dev_split_Depression_AVEC2017.csv",
+            "data_output/full_test_split.csv",
+            "data_output/train_split_Depression_AVEC2017.csv",
         ]
         self.feature_map = {}
 
@@ -74,18 +74,20 @@ class DataLoader:
         for path in self.phq_paths:
             phq_df = pd.read_csv(path)
             phq_column = (
-                "PHQ_Binary" if "PHQ_Binary" in phq_df.columns else "PHQ8_Binary"
-                if "PHQ8_Binary" in phq_df.columns
-                else None
+                "PHQ_Binary"
+                if "PHQ_Binary" in phq_df.columns
+                else "PHQ8_Binary" if "PHQ8_Binary" in phq_df.columns else None
             )
-            
+
             if phq_column:
                 phq_df = phq_df[["Participant_ID", phq_column]]
                 phq_df.rename(columns={phq_column: "PHQ_Binary"}, inplace=True)
                 phq_dataframes.append(phq_df)
 
         combined_phq_df = pd.concat(phq_dataframes, ignore_index=True)
-        df = df.merge(combined_phq_df, how="left", left_on="ID", right_on="Participant_ID")
+        df = df.merge(
+            combined_phq_df, how="left", left_on="ID", right_on="Participant_ID"
+        )
         df.drop(columns=["Participant_ID"], inplace=True)
         return df.dropna(subset=["PHQ_Binary"])
 
@@ -111,15 +113,17 @@ class DataLoader:
     ) -> pd.DataFrame:
         df["TIMESTAMP"] = df[timestamp_col]
         df = df.drop(
-            columns=[col for col in df.columns if "timestamp" in col and col != "TIMESTAMP"]
+            columns=[
+                col for col in df.columns if "timestamp" in col and col != "TIMESTAMP"
+            ]
         )
-        
+
         df["TIMESTAMP"] = pd.to_timedelta(df["TIMESTAMP"], unit="s")
         df.set_index(["ID", "TIMESTAMP"], inplace=True)
-        
+
         if "AUDIO" in timestamp_col:
             df = df.groupby("ID").resample("33.3311ms", level="TIMESTAMP").mean()
-            
+
         df = df.reset_index()
         df["TIMESTAMP"] = df["TIMESTAMP"].apply(lambda x: x.round("10ms"))
         df.set_index(["ID", "TIMESTAMP"], inplace=True)
@@ -134,7 +138,7 @@ class DataLoader:
 
 
 class ResultsLoader(DataLoader):
-    def __init__(self, base_directory: str = "data"):
+    def __init__(self, base_directory: str = "data_input"):
         super().__init__(base_directory)
         self.feature_map = {}
 
@@ -146,7 +150,7 @@ class ResultsLoader(DataLoader):
 
 
 class TextLoader(DataLoader):
-    def __init__(self, base_directory: str = "data"):
+    def __init__(self, base_directory: str = "data_input"):
         super().__init__(base_directory)
         self.feature_map = {
             "TRANSCRIPT": (pp_text.preprocess_TRANSCRIPT, "TRANSCRIPT_"),
@@ -156,15 +160,14 @@ class TextLoader(DataLoader):
     def get_data(self, percentage: float = 0, random_state: int = 42) -> pd.DataFrame:
         balanced_subset = self.get_balanced_subset(percentage, random_state)
         path_map = self.get_path_map(
-            required_files=self.required_files, 
-            folder_ids=balanced_subset
+            required_files=self.required_files, folder_ids=balanced_subset
         )
         df = self._get_feature_subset_df(path_map)
         return df.set_index("ID")
 
 
 class AudioLoader(DataLoader):
-    def __init__(self, base_directory: str = "data"):
+    def __init__(self, base_directory: str = "data_input"):
         super().__init__(base_directory)
         self.feature_map = {
             "AUDIO": (pp_audio.preprocess_AUDIO, "AUDIO_"),
@@ -182,15 +185,16 @@ class AudioLoader(DataLoader):
     ) -> pd.DataFrame:
         balanced_subset = self.get_balanced_subset(percentage, random_state)
         path_map = self.get_path_map(
-            required_files=self.required_files, 
-            folder_ids=balanced_subset
+            required_files=self.required_files, folder_ids=balanced_subset
         )
         df = self._get_feature_subset_df(path_map)
-        return self._process_temporal_features(df, "FORMANT_timestamp", ds_freq, rw_size)
+        return self._process_temporal_features(
+            df, "FORMANT_timestamp", ds_freq, rw_size
+        )
 
 
 class FaceLoader(DataLoader):
-    def __init__(self, base_directory: str = "data"):
+    def __init__(self, base_directory: str = "data_input"):
         super().__init__(base_directory)
         self.feature_map = {
             "CLNF_gaze": (pp_face.preprocess_CLNF_gaze, "CLNFgaze_"),
@@ -201,8 +205,12 @@ class FaceLoader(DataLoader):
             "CLNF_features3D": (pp_face.preprocess_CLNF_features3D, "CLNFfeatures3D_"),
         }
         self.required_files = [
-            "CLNF_gaze.txt", "CLNF_AUs.txt", "CLNF_hog.bin",
-            "CLNF_features.txt", "CLNF_pose.txt", "CLNF_features3D.txt"
+            "CLNF_gaze.txt",
+            "CLNF_AUs.txt",
+            "CLNF_hog.bin",
+            "CLNF_features.txt",
+            "CLNF_pose.txt",
+            "CLNF_features3D.txt",
         ]
 
     def get_data(
@@ -214,15 +222,20 @@ class FaceLoader(DataLoader):
     ) -> pd.DataFrame:
         balanced_subset = self.get_balanced_subset(percentage, random_state)
         path_map = self.get_path_map(
-            required_files=self.required_files, 
-            folder_ids=balanced_subset
+            required_files=self.required_files, folder_ids=balanced_subset
         )
         df = self._get_feature_subset_df(path_map)
         df = self._process_temporal_features(df, "CLNFgaze_timestamp", ds_freq, rw_size)
         return df
 
     def _clean_columns(self, df: pd.DataFrame) -> pd.DataFrame:
-        return df.drop(columns=[
-            col for col in df.columns
-            if any(substring in col for substring in ["frame", "confidence", "success", "is_valid"])
-        ])
+        return df.drop(
+            columns=[
+                col
+                for col in df.columns
+                if any(
+                    substring in col
+                    for substring in ["frame", "confidence", "success", "is_valid"]
+                )
+            ]
+        )

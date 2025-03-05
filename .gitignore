@@ -1,6 +1,5 @@
-data_audio/
-data_face/
-data_text/
-data/
+data_input/
+data_output/
 .idea/
+
 
