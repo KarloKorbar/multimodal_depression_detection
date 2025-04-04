@@ -5,6 +5,7 @@ import preprocessing.pp_text as pp_text
 import preprocessing.pp_audio as pp_audio
 import preprocessing.pp_face as pp_face
 
+#TODO: think about extracting all the models into their own files to make it cleaner
 
 class DataLoader:
     def __init__(self, base_directory: str = "data_input"):
