@@ -1,0 +1,389 @@
+AUDIO MODEL & TRAINING REFERENCE:
+ # Define the RNN model
+# class AudioRNN(nn.Module):
+#     def __init__(self, input_size, hidden_size, num_layers, dropout):
+#         super(AudioRNN, self).__init__()
+#         self.hidden_size = hidden_size
+#         self.num_layers = num_layers
+        
+#         # LSTM layer
+#         self.lstm = nn.LSTM(
+#             input_size=input_size,
+#             hidden_size=hidden_size,
+#             num_layers=num_layers,
+#             batch_first=True,
+#             dropout=dropout if num_layers > 1 else 0
+#         )
+        
+#         # Attention mechanism
+#         self.attention = nn.Linear(hidden_size, 1)
+        
+#         # Output layers
+#         self.fc1 = nn.Linear(hidden_size, 32)
+#         self.dropout = nn.Dropout(dropout)
+#         self.fc2 = nn.Linear(32, 2)  # 2 classes for binary classification
+        
+#     def forward(self, x):
+#         # LSTM forward pass
+#         lstm_out, _ = self.lstm(x)
+        
+#         # Apply attention
+#         attention_weights = torch.softmax(self.attention(lstm_out), dim=1)
+#         context_vector = torch.sum(attention_weights * lstm_out, dim=1)
+        
+#         # Final classification layers
+#         out = self.dropout(torch.relu(self.fc1(context_vector)))
+#         out = self.fc2(out)
+#         return out
+
+# Training function
+# def train_model(model, train_loader, val_loader, criterion, optimizer, n_epochs, device):
+#     model = model.to(device)
+#     best_val_loss = float('inf')
+#     early_stopping_counter = 0
+#     early_stopping_patience = 5
+    
+#     train_losses = []
+#     val_losses = []
+    
+#     for epoch in range(n_epochs):
+#         model.train()
+#         total_train_loss = 0
+        
+#         for batch_X, batch_y in train_loader:
+#             batch_X, batch_y = batch_X.to(device), batch_y.to(device)
+            
+#             optimizer.zero_grad()
+#             outputs = model(batch_X)
+#             loss = criterion(outputs, batch_y)
+            
+#             loss.backward()
+#             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  # Gradient clipping
+#             optimizer.step()
+            
+#             total_train_loss += loss.item()
+        
+#         # Validation phase
+#         model.eval()
+#         total_val_loss = 0
+        
+#         with torch.no_grad():
+#             for batch_X, batch_y in val_loader:
+#                 batch_X, batch_y = batch_X.to(device), batch_y.to(device)
+#                 outputs = model(batch_X)
+#                 val_loss = criterion(outputs, batch_y)
+#                 total_val_loss += val_loss.item()
+        
+#         avg_train_loss = total_train_loss / len(train_loader)
+#         avg_val_loss = total_val_loss / len(val_loader)
+        
+#         train_losses.append(avg_train_loss)
+#         val_losses.append(avg_val_loss)
+        
+#         # Early stopping check
+#         if avg_val_loss < best_val_loss:
+#             best_val_loss = avg_val_loss
+#             early_stopping_counter = 0
+#             torch.save(model.state_dict(), 'best_model.pth')
+#         else:
+#             early_stopping_counter += 1
+            
+#         if early_stopping_counter >= early_stopping_patience:
+#             print(f"Early stopping triggered at epoch {epoch+1}")
+#             break
+            
+#         if (epoch + 1) % 5 == 0:
+#             print(f'Epoch [{epoch+1}/{n_epochs}], Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}')
+    
+#     return train_losses, val_losses
+
+
+FACE MODEL & TRAINING REFERENCE:
+
+# class SpatialAttention(nn.Module):
+#     def __init__(self, input_dim):
+#         super(SpatialAttention, self).__init__()
+#         self.attention = nn.Sequential(
+#             nn.Linear(input_dim, input_dim // 2),
+#             nn.ReLU(),
+#             nn.Linear(input_dim // 2, 1),
+#             nn.Sigmoid()
+#         )
+    
+#     def forward(self, x):
+#         # x shape: (batch, seq_len, input_dim)
+#         attention_weights = self.attention(x)  # (batch, seq_len, 1)
+#         attended_features = x * attention_weights
+#         return attended_features, attention_weights
+
+# class TemporalAttention(nn.Module):
+#     def __init__(self, hidden_dim):
+#         super(TemporalAttention, self).__init__()
+#         self.attention = nn.Sequential(
+#             nn.Linear(hidden_dim, hidden_dim // 2),
+#             nn.Tanh(),
+#             nn.Linear(hidden_dim // 2, 1)
+#         )
+    
+#     def forward(self, hidden_states):
+#         # hidden_states shape: (batch, seq_len, hidden_dim)
+#         attention_weights = self.attention(hidden_states)  # (batch, seq_len, 1)
+#         attention_weights = torch.softmax(attention_weights, dim=1)
+#         context = torch.sum(hidden_states * attention_weights, dim=1)  # (batch, hidden_dim)
+#         return context, attention_weights
+
+# class FaceSTRNN(nn.Module):
+#     def __init__(self, input_size, hidden_size, num_layers, num_classes, dropout):
+#         super(FaceSTRNN, self).__init__()
+        
+#         self.hidden_size = hidden_size
+#         self.num_layers = num_layers
+        
+#         # Spatial attention
+#         self.spatial_attention = SpatialAttention(input_size)
+        
+#         # Bidirectional LSTM
+#         self.lstm = nn.LSTM(
+#             input_size=input_size,
+#             hidden_size=hidden_size,
+#             num_layers=num_layers,
+#             batch_first=True,
+#             bidirectional=True,
+#             dropout=dropout if num_layers > 1 else 0
+#         )
+        
+#         # Temporal attention
+#         self.temporal_attention = TemporalAttention(hidden_size * 2)  # *2 for bidirectional
+        
+#         # Output layers
+#         self.fc1 = nn.Linear(hidden_size * 2, hidden_size)
+#         self.dropout = nn.Dropout(dropout)
+#         self.batch_norm = nn.BatchNorm1d(hidden_size)
+#         self.fc2 = nn.Linear(hidden_size, num_classes)
+        
+#     def forward(self, x):
+#         # Apply spatial attention
+#         x, spatial_weights = self.spatial_attention(x)
+        
+#         # LSTM forward pass
+#         lstm_out, _ = self.lstm(x)
+        
+#         # Apply temporal attention
+#         context, temporal_weights = self.temporal_attention(lstm_out)
+        
+#         # Final classification
+#         out = self.fc1(context)
+#         out = self.batch_norm(out)
+#         out = torch.relu(out)
+#         out = self.dropout(out)
+#         out = self.fc2(out)
+        
+#         return out, spatial_weights, temporal_weights
+
+# def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler, n_epochs, device):
+#     model = model.to(device)
+#     best_val_loss = float('inf')
+#     early_stopping_counter = 0
+#     early_stopping_patience = 7
+    
+#     train_losses = []
+#     val_losses = []
+    
+#     for epoch in range(n_epochs):
+#         # Training phase
+#         model.train()
+#         total_train_loss = 0
+        
+#         for batch_X, batch_y in train_loader:
+#             batch_X, batch_y = batch_X.to(device), batch_y.to(device)
+            
+#             optimizer.zero_grad()
+#             outputs, _, _ = model(batch_X)
+#             loss = criterion(outputs, batch_y)
+            
+#             loss.backward()
+#             # Gradient clipping
+#             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+#             optimizer.step()
+            
+#             total_train_loss += loss.item()
+        
+#         # Validation phase
+#         model.eval()
+#         total_val_loss = 0
+        
+#         with torch.no_grad():
+#             for batch_X, batch_y in val_loader:
+#                 batch_X, batch_y = batch_X.to(device), batch_y.to(device)
+#                 outputs, _, _ = model(batch_X)
+#                 val_loss = criterion(outputs, batch_y)
+#                 total_val_loss += val_loss.item()
+        
+#         # Calculate average losses
+#         avg_train_loss = total_train_loss / len(train_loader)
+#         avg_val_loss = total_val_loss / len(val_loader)
+        
+#         # Learning rate scheduling
+#         scheduler.step(avg_val_loss)
+        
+#         train_losses.append(avg_train_loss)
+#         val_losses.append(avg_val_loss)
+        
+#         # Early stopping check
+#         if avg_val_loss < best_val_loss:
+#             best_val_loss = avg_val_loss
+#             early_stopping_counter = 0
+#             torch.save(model.state_dict(), 'best_facial_model.pth')
+#         else:
+#             early_stopping_counter += 1
+            
+#         if early_stopping_counter >= early_stopping_patience:
+#             print(f"Early stopping triggered at epoch {epoch+1}")
+#             break
+            
+#         if (epoch + 1) % 5 == 0:
+#             print(f'Epoch [{epoch+1}/{n_epochs}], Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}')
+    
+#     return train_losses, val_losses
+
+MULTIMODAL MODEL & TRAINING REFERENCE:
+# Define multimodal fusion model
+# class MultimodalFusion(nn.Module):
+#     def __init__(self, text_model, audio_model, face_model):
+#         super(MultimodalFusion, self).__init__()
+#         self.text_model = text_model
+#         self.audio_model = audio_model
+#         self.face_model = face_model
+#         
+#         # Freeze individual models
+#         for model in [self.audio_model, self.face_model]:
+#             for param in model.parameters():
+#                 param.requires_grad = False
+#         
+#         # Get output sizes from each model
+#         self.text_output_size = len(self.text_model.named_steps['tfidf'].get_feature_names_out())
+#         self.audio_output_size = self.audio_model.hidden_size * 2  # *2 for bidirectional
+#         self.face_output_size = self.face_model.hidden_size * 2    # *2 for bidirectional
+#         
+#         # Projection layers to standardize dimensions
+#         self.text_projection = nn.Linear(self.text_output_size, 256)
+#         self.audio_projection = nn.Linear(self.audio_output_size, 256)
+#         self.face_projection = nn.Linear(self.face_output_size, 256)
+#         
+#         # Fusion layers
+#         self.fusion_layers = nn.Sequential(
+#             nn.Linear(256 * 3, 512),
+#             nn.ReLU(),
+#             nn.Dropout(0.3),
+#             nn.Linear(512, 128),
+#             nn.ReLU(),
+#             nn.Dropout(0.3),
+#             nn.Linear(128, 2)
+#         )
+#         
+#     def forward(self, text_input, audio_input, face_input):
+#         # Get embeddings from individual models
+#         # For text, convert sparse matrix to dense tensor
+#         text_output = torch.from_numpy(
+#             self.text_model.transform(text_input).toarray()
+#         ).float().to(text_input.device)
+#         text_output = self.text_projection(text_output)
+#         
+#         # For audio and face, get the outputs and discard attention weights
+#         audio_output, _, _ = self.audio_model(audio_input)
+#         audio_output = self.audio_projection(audio_output)
+#         
+#         face_output, _, _ = self.face_model(face_input)
+#         face_output = self.face_projection(face_output)
+#         
+#         # Concatenate embeddings
+#         combined = torch.cat((text_output, audio_output, face_output), dim=1)
+#         
+#         # Pass through fusion layers
+#         output = self.fusion_layers(combined)
+#         return output
+# 
+# Training function
+# def train_multimodal(model, train_loader, val_loader, criterion, optimizer, scheduler, n_epochs, device):
+#     model = model.to(device)
+#     best_val_loss = float('inf')
+#     early_stopping_counter = 0
+#     early_stopping_patience = 7
+
+#     train_losses = []
+#     val_losses = []
+
+#     for epoch in range(n_epochs):
+#         # Training phase
+#         model.train()
+#         total_train_loss = 0
+
+#         for batch_text, batch_audio, batch_face, batch_y in train_loader:
+#             # Move all inputs to device
+#             batch_text = batch_text.to(device)
+#             batch_audio = batch_audio.to(device)
+#             batch_face = batch_face.to(device)
+#             batch_y = batch_y.to(device)
+
+#             optimizer.zero_grad()
+#             outputs = model(batch_text, batch_audio, batch_face)
+#             loss = criterion(outputs, batch_y)
+
+#             loss.backward()
+#             # Gradient clipping
+#             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+#             optimizer.step()
+
+#             total_train_loss += loss.item()
+
+#         # Validation phase
+#         model.eval()
+#         total_val_loss = 0
+
+#         with torch.no_grad():
+#             for batch_text, batch_audio, batch_face, batch_y in val_loader:
+#                 # Move all inputs to device
+#                 batch_text = batch_text.to(device)
+#                 batch_audio = batch_audio.to(device)
+#                 batch_face = batch_face.to(device)
+#                 batch_y = batch_y.to(device)
+
+#                 outputs = model(batch_text, batch_audio, batch_face)
+#                 val_loss = criterion(outputs, batch_y)
+#                 total_val_loss += val_loss.item()
+
+#         # Calculate average losses
+#         avg_train_loss = total_train_loss / len(train_loader)
+#         avg_val_loss = total_val_loss / len(val_loader)
+
+
+#         # Learning rate scheduling
+#         scheduler.step(avg_val_loss)
+
+#         train_losses.append(avg_train_loss)
+#         val_losses.append(avg_val_loss)
+
+#         # Early stopping check
+#         if avg_val_loss < best_val_loss:
+#             best_val_loss = avg_val_loss
+#             early_stopping_counter = 0
+#             torch.save({
+#                 'model_state_dict': model.state_dict(),
+#                 'optimizer_state_dict': optimizer.state_dict(),
+#                 'train_loss': avg_train_loss,
+#                 'val_loss': avg_val_loss,
+#                 'epoch': epoch,
+#             }, 'best_multimodal_model.pth')
+#         else:
+#             early_stopping_counter += 1
+
+#         if early_stopping_counter >= early_stopping_patience:
+#             print(f"Early stopping triggered at epoch {epoch+1}")
+#             break
+
+#         if (epoch + 1) % 5 == 0:
+#             print(f'Epoch [{epoch+1}/{n_epochs}], Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}')
+
+#     return train_losses, val_losses
+
+
