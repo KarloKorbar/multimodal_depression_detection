@@ -1,11 +1,7 @@
 import os
 import pandas as pd
-from typing import List, Optional, Dict, Tuple, Any
-import preprocessing.pp_text as pp_text
-import preprocessing.pp_audio as pp_audio
-import preprocessing.pp_face as pp_face
+from typing import List, Optional
 
-#TODO: think about extracting all the models into their own files to make it cleaner
 
 class DataLoader:
     def __init__(self, base_directory: str = "data_input"):
@@ -18,7 +14,7 @@ class DataLoader:
         self.feature_map = {}
 
     def get_path_map(
-        self, required_files: List[str] = [], folder_ids: Optional[List[int]] = None
+            self, required_files: List[str] = [], folder_ids: Optional[List[int]] = None
     ) -> pd.DataFrame:
         data = []
         subfolders = [
@@ -110,7 +106,7 @@ class DataLoader:
         return df
 
     def _process_temporal_features(
-        self, df: pd.DataFrame, timestamp_col: str, ds_freq: str, rw_size: str
+            self, df: pd.DataFrame, timestamp_col: str, ds_freq: str, rw_size: str
     ) -> pd.DataFrame:
         df["TIMESTAMP"] = df[timestamp_col]
         df = df.drop(
@@ -135,108 +131,4 @@ class DataLoader:
             .rolling(rw_size, on=df_resampled.index.get_level_values("TIMESTAMP"))
             .mean()
             .reset_index(level=0, drop=True)
-        )
-
-
-class ResultsLoader(DataLoader):
-    def __init__(self, base_directory: str = "data_input"):
-        super().__init__(base_directory)
-        self.feature_map = {}
-
-    def get_data(self, percentage: float = 0, random_state: int = 42) -> pd.DataFrame:
-        balanced_subset = self.get_balanced_subset(percentage, random_state)
-        df = self.get_path_map(folder_ids=balanced_subset)
-        df = self._append_PHQ_Binary(df)
-        return df.set_index("ID")
-
-
-class TextLoader(DataLoader):
-    def __init__(self, base_directory: str = "data_input"):
-        super().__init__(base_directory)
-        self.feature_map = {
-            "TRANSCRIPT": (pp_text.preprocess_TRANSCRIPT, "TRANSCRIPT_"),
-        }
-        self.required_files = ["TRANSCRIPT.csv"]
-
-    def get_data(self, percentage: float = 0, random_state: int = 42) -> pd.DataFrame:
-        balanced_subset = self.get_balanced_subset(percentage, random_state)
-        path_map = self.get_path_map(
-            required_files=self.required_files, folder_ids=balanced_subset
-        )
-        df = self._get_feature_subset_df(path_map)
-        return df.set_index("ID")
-
-
-class AudioLoader(DataLoader):
-    def __init__(self, base_directory: str = "data_input"):
-        super().__init__(base_directory)
-        self.feature_map = {
-            "AUDIO": (pp_audio.preprocess_AUDIO, "AUDIO_"),
-            "FORMANT": (pp_audio.preprocess_FORMANT, "FORMANT_"),
-            "COVAREP": (pp_audio.preprocess_COVAREP, "COVAREP_"),
-        }
-        self.required_files = ["AUDIO.wav", "FORMANT.csv", "COVAREP.csv"]
-
-    def get_data(
-        self,
-        percentage: float = 0,
-        random_state: int = 42,
-        ds_freq: str = "50ms",
-        rw_size: str = "10s",
-    ) -> pd.DataFrame:
-        balanced_subset = self.get_balanced_subset(percentage, random_state)
-        path_map = self.get_path_map(
-            required_files=self.required_files, folder_ids=balanced_subset
-        )
-        df = self._get_feature_subset_df(path_map)
-        return self._process_temporal_features(
-            df, "FORMANT_timestamp", ds_freq, rw_size
-        )
-
-
-class FaceLoader(DataLoader):
-    def __init__(self, base_directory: str = "data_input"):
-        super().__init__(base_directory)
-        self.feature_map = {
-            "CLNF_gaze": (pp_face.preprocess_CLNF_gaze, "CLNFgaze_"),
-            "CLNF_AUs": (pp_face.preprocess_CLNF_AUs, "CLNFAUs_"),
-            "CLNF_hog": (pp_face.preprocess_CLNF_hog, "CLNFhog_"),
-            "CLNF_features": (pp_face.preprocess_CLNF_features, "CLNFfeatures_"),
-            "CLNF_pose": (pp_face.preprocess_CLNF_pose, "CLNFpose_"),
-            "CLNF_features3D": (pp_face.preprocess_CLNF_features3D, "CLNFfeatures3D_"),
-        }
-        self.required_files = [
-            "CLNF_gaze.txt",
-            "CLNF_AUs.txt",
-            "CLNF_hog.bin",
-            "CLNF_features.txt",
-            "CLNF_pose.txt",
-            "CLNF_features3D.txt",
-        ]
-
-    def get_data(
-        self,
-        percentage: float = 0,
-        random_state: int = 42,
-        ds_freq: str = "50ms",
-        rw_size: str = "10s",
-    ) -> pd.DataFrame:
-        balanced_subset = self.get_balanced_subset(percentage, random_state)
-        path_map = self.get_path_map(
-            required_files=self.required_files, folder_ids=balanced_subset
-        )
-        df = self._get_feature_subset_df(path_map)
-        df = self._process_temporal_features(df, "CLNFgaze_timestamp", ds_freq, rw_size)
-        return df
-
-    def _clean_columns(self, df: pd.DataFrame) -> pd.DataFrame:
-        return df.drop(
-            columns=[
-                col
-                for col in df.columns
-                if any(
-                    substring in col
-                    for substring in ["frame", "confidence", "success", "is_valid"]
-                )
-            ]
         )
