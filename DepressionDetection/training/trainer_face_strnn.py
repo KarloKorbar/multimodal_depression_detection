@@ -1,6 +1,6 @@
 import torch
 
-from utils.trainer import BaseTrainer
+from training.trainer import BaseTrainer
 
 
 class FaceSTRNNTrainer(BaseTrainer):
