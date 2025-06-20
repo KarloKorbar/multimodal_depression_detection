@@ -62,26 +62,25 @@ def read_hog(filename, batch_size=5000):
 
         return df
 
-def preprocess_CLNF_gaze(path): # good
+def preprocess_CLNF_gaze(path):
     gaze_df = pd.read_csv(path)
     return gaze_df
 
-def preprocess_CLNF_AUs(path): # good
+def preprocess_CLNF_AUs(path):
     au_df = pd.read_csv(path)
     return au_df
 
-def preprocess_CLNF_hog(path): #TODO: 300 is .txt when it should be .bin
-    # NOTE: works, but god is it slow
+def preprocess_CLNF_hog(path):
     df = read_hog(path)
     # Add timestamps at 33.333ms intervals (30 fps)
     df['timestamp'] = pd.Series(np.arange(len(df)) * 0.033333)
     return df
 
-def preprocess_CLNF_features(path):  # good
+def preprocess_CLNF_features(path):
     features_df = pd.read_csv(path)
     return features_df
 
-def preprocess_CLNF_pose(path):  # good
+def preprocess_CLNF_pose(path):
     pose_df = pd.read_csv(path)
     return pose_df
 

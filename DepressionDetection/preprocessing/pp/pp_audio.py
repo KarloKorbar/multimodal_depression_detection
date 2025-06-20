@@ -18,7 +18,6 @@ def add_timestamps(df, sampling_rate=100):
 
 
 def preprocess_AUDIO(path):
-    # TODO: is it necessary to resample the audio data to 100Hz? it might not be usefull at this sampling rate
     # Load the audio file
     y, sr = librosa.load(path)
 
