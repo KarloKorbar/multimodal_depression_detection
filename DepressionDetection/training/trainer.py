@@ -140,24 +140,26 @@ def plot_training_curves(
 
 
 # Save model state and related information.
-def save_model(model, scaler, save_path):
+def save_model(model, scaler, input_size, best_params, save_path):
     torch.save(
         {
             "model_state_dict": model.state_dict(),
             "scaler_state_dict": scaler,
-            # 'input_size': input_size,
-            # 'best_params': best_params
+            "input_size": input_size,
+            "best_params": best_params,
         },
         save_path,
     )
 
 
 # Load a saved model and its related information.
+# NOTE: might need to save and load the input_size and best_params
 def load_model(model_class, load_path, device):
     checkpoint = torch.load(load_path, map_location=device)
 
     model = model_class(
-        input_size=checkpoint["input_size"], **checkpoint["best_params"]
+        input_size=checkpoint["input_size"],
+        **checkpoint["best_params"],
     ).to(device)
 
     model.load_state_dict(checkpoint["model_state_dict"])
