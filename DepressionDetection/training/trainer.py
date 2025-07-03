@@ -153,14 +153,12 @@ def save_model(model, scaler, input_size, best_params, save_path):
 
 
 # Load a saved model and its related information.
-# NOTE: might need to save and load the input_size and best_params
 def load_model(model_class, load_path, device):
     checkpoint = torch.load(load_path, map_location=device)
 
-    model = model_class(
-        input_size=checkpoint["input_size"],
-        **checkpoint["best_params"],
-    ).to(device)
+    best_params = checkpoint["best_params"].copy()
+    [best_params.pop(k, None) for k in ("learning_rate", "weight_decay")]
+    model = model_class(input_size=checkpoint["input_size"], **best_params).to(device)
 
     model.load_state_dict(checkpoint["model_state_dict"])
     scaler = checkpoint["scaler_state_dict"]
