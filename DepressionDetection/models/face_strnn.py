@@ -72,32 +72,14 @@ class FaceSTRNN(nn.Module):
         self.batch_norm = nn.BatchNorm1d(hidden_size)
         self.fc2 = nn.Linear(hidden_size, num_classes)
 
-    def forward(self, x):
-        # Apply spatial attention
+    def forward(self, x, return_embedding=False):
         x, spatial_weights = self.spatial_attention(x)
-
-        # LSTM forward pass
         lstm_out, _ = self.lstm(x)
-        # Debug: print LSTM output shape
-        # print(f"lstm_out shape: {lstm_out.shape}")
-
-        # Apply temporal attention
         context, temporal_weights = self.temporal_attention(lstm_out)
-        # print(f"context shape after temporal attention: {context.shape}")
-
-        # Dynamically determine expected input features for fc1
-        # expected_features = self.hidden_size * (2 if self.lstm.bidirectional else 1)
-        # if context.shape[1] != expected_features:
-        #     raise RuntimeError(
-        #         f"Shape mismatch before fc1: context shape {context.shape}, expected {expected_features}. "
-        #         f"This usually means hidden_size or bidirectional setting is inconsistent. "
-        #         f"Check model initialization: input_size={self.lstm.input_size}, hidden_size={self.hidden_size}, num_layers={self.num_layers}, bidirectional={self.lstm.bidirectional}. "
-        #         f"lstm_out shape: {lstm_out.shape}"
-        #     )
-        out = self.fc1(context)
-        out = self.batch_norm(out)
-        out = torch.relu(out)
-        out = self.dropout(out)
-        out = self.fc2(out)
-
-        return out, spatial_weights, temporal_weights
+        embedding = torch.relu(self.fc1(context))
+        embedding = self.batch_norm(embedding)
+        embedding = self.dropout(embedding)
+        logits = self.fc2(embedding)
+        if return_embedding:
+            return embedding  # shape: (batch, hidden_size)
+        return logits, spatial_weights, temporal_weights

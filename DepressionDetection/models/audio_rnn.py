@@ -27,21 +27,15 @@ class AudioRNN(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.fc2 = nn.Linear(hidden_size // 2, 2)  # 2 classes for binary classification
 
-    def forward(self, x):
-        # Reshape input to (batch_size, sequence_length=1, features)
+    def forward(self, x, return_embedding=False):
         if len(x.shape) == 2:
             x = x.unsqueeze(1)
-
-        # LSTM forward pass
-        lstm_out, _ = self.lstm(x)  # lstm_out shape: (batch_size, seq_len, hidden_size)
-
-        # Apply attention
+        lstm_out, _ = self.lstm(x)
         attention_weights = torch.softmax(self.attention(lstm_out), dim=1)
-        context_vector = torch.sum(
-            attention_weights * lstm_out, dim=1
-        )  # shape: (batch_size, hidden_size)
-
-        # Final classification layers
-        out = self.dropout(torch.relu(self.fc1(context_vector)))
-        out = self.fc2(out)
-        return out
+        context_vector = torch.sum(attention_weights * lstm_out, dim=1)
+        embedding = torch.relu(self.fc1(context_vector))
+        out = self.dropout(embedding)
+        logits = self.fc2(out)
+        if return_embedding:
+            return embedding  # shape: (batch, hidden_size//2)
+        return logits
