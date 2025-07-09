@@ -3,3 +3,15 @@ data_output/
 .idea/
 .DS_Store
 Text/
+
+saved/
+
+models/pca_audio.pkl
+models/pca_face_action_units.pkl
+models/pca_face_landmarks.pkl
+models/pca_face_pose.pkl
+
+audio_model.pth
+best_multimodal_model.pth
+face_model.pth
+text_model.joblib
