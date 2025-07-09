@@ -5,6 +5,7 @@ data_output/
 Text/
 
 saved/
+checkpoints/
 
 models/pca_audio.pkl
 models/pca_face_action_units.pkl
