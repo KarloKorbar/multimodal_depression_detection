@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Multimodal fusion represents a sophisticated approach to combining information from multiple data sources to achieve more robust and accurate predictions. In the context of depression detection, this approach is particularly valuable as it allows the system to leverage complementary information from textual, audio, and facial expression modalities. This chapter presents the theoretical foundations of multimodal fusion and details its implementation in our depression detection system, including the necessary preprocessing steps, model architecture, and training pipeline.
+Multimodal fusion represents a sophisticated approach to combining information from multiple data sources to achieve more robust and accurate predictions. In the context of depression detection, this approach is particularly valuable as it allows the system to leverage complementary information from textual, audio, and facial expression modalities. This chapter presents the theoretical foundations of multimodal fusion and details its implementation in the depression detection system, including the necessary preprocessing steps, model architecture, and training pipeline.
 
 ## On multimodal fusion
 
@@ -16,15 +16,15 @@ Late fusion, alternatively referred to as decision-level fusion, takes an opposi
 
 The third approach, intermediate or hybrid fusion, represents a carefully balanced compromise between the previous two methods. This technique combines features at intermediate levels of processing, after modality-specific preprocessing but before final decision-making. The hybrid approach preserves the ability to apply specialized processing to each modality while enabling the learning of cross-modal patterns through carefully designed fusion layers. While this method introduces additional architectural complexity and requires more careful consideration of hyperparameter tuning, its flexibility and potential for capturing sophisticated cross-modal interactions make it particularly suitable for depression detection.
 
-In our implementation, we have adopted the intermediate fusion approach, guided by several critical considerations derived from the nature of our data and the specific requirements of depression detection. The temporal characteristics of our data streams present a fundamental challenge: audio data requires high sampling rates (100Hz after resampling), facial features combine multiple components captured at 30fps, and textual data exists in a non-temporal format. These varying temporal scales would make early fusion particularly problematic, while late fusion would fail to capture the temporal relationships between modalities that often provide crucial diagnostic information.
+In the implementation, an intermediate fusion approach has been adopted, guided by several critical considerations derived from the nature of the data and the specific requirements of depression detection. The temporal characteristics of the data streams present a fundamental challenge: audio data requires high sampling rates (100Hz after resampling), facial features combine multiple components captured at 30fps, and textual data exists in a non-temporal format. These varying temporal scales would make early fusion particularly problematic, while late fusion would fail to capture the temporal relationships between modalities that often provide crucial diagnostic information.
 
-The complexity of our feature space further justifies the hybrid approach. Audio features encompass a rich set of COVAREP features, including fundamental frequency, formants, and spectral characteristics. Facial features combine spatial data from multiple sources, including HOG features, three-dimensional facial landmarks, and Action Units. Textual data, processed through TF-IDF vectorization, exists in yet another dimensional space. Each of these modalities requires specialized preprocessing and feature extraction techniques that would be lost in an early fusion approach.
+The complexity of the feature space further justifies the hybrid approach. Audio features encompass a rich set of COVAREP features, including fundamental frequency, formants, and spectral characteristics. Facial features combine spatial data from multiple sources, including HOG features, three-dimensional facial landmarks, and Action Units. Textual data, processed through TF-IDF vectorization, exists in yet another dimensional space. Each of these modalities requires specialized preprocessing and feature extraction techniques that would be lost in an early fusion approach.
 
-Our hybrid fusion implementation leverages specialized processing for each modality while enabling meaningful cross-modal learning. Face data is processed through a spatial-temporal attention network (STRNN), audio features are analyzed using RNN with attention mechanisms, and text undergoes TF-IDF transformation. These specialized processes feed into a fusion network that projects features into a common dimensional space before combining them through learned layers. This architecture allows the model to handle cases where modalities provide complementary or even contradictory information, a common occurrence in depression detection where symptoms may manifest differently across modalities.
+The hybrid fusion implementation leverages specialized processing for each modality while enabling meaningful cross-modal learning. Face data is processed through a spatial-temporal attention network (STRNN), audio features are analyzed using RNN with attention mechanisms, and text undergoes TF-IDF transformation. These specialized processes feed into a fusion network that projects features into a common dimensional space before combining them through learned layers. This architecture allows the model to handle cases where modalities provide complementary or even contradictory information, a common occurrence in depression detection where symptoms may manifest differently across modalities.
 
 ## Architecture Diagram
 
-The architectural design of our multimodal fusion system is structured as a hierarchical pipeline that systematically processes and integrates information from three distinct modalities: textual, audio, and facial data. The architecture follows a modular design philosophy, where each modality undergoes specialized preprocessing and feature extraction before being integrated into a unified representation space. This design enables the system to leverage the unique characteristics of each modality while facilitating effective cross-modal learning.
+The architectural design of the multimodal fusion system is structured as a hierarchical pipeline that systematically processes and integrates information from three distinct modalities: textual, audio, and facial data. The architecture follows a modular design philosophy, where each modality undergoes specialized preprocessing and feature extraction before being integrated into a unified representation space. This design enables the system to leverage the unique characteristics of each modality while facilitating effective cross-modal learning.
 
 The architecture begins with the input layer, which receives raw data from three distinct sources: textual transcripts, audio recordings, and facial video streams. Each input stream is directed to its specialized preprocessing module, where domain-specific feature extraction techniques are applied. The textual data undergoes TF-IDF vectorization to capture semantic content, while audio data is processed through COVAREP feature extraction to obtain acoustic characteristics. Facial data is processed through a dedicated feature extraction pipeline that captures both spatial and temporal aspects of facial expressions.
 
@@ -34,7 +34,7 @@ A critical component of the architecture is the feature projection layer, which 
 
 The final stage of the architecture consists of the fusion network, which integrates the standardized features through a series of fully connected layers. This network employs a hierarchical structure that progressively combines features through concatenation, followed by multiple fusion layers that learn complex cross-modal interactions. The architecture culminates in an output layer that produces the final depression detection prediction.
 
-The following diagram illustrates the complete architecture of our multimodal fusion approach for depression detection:
+The following diagram illustrates the complete architecture of the multimodal fusion approach for depression detection:
 
 ```plantuml
 @startuml
@@ -231,7 +231,7 @@ This comprehensive setup process establishes a robust foundation for multimodal 
 
 ### Model Structure
 
-The multimodal fusion architecture is implemented as a PyTorch neural network module that orchestrates the integration of three specialized models, each designed to process a distinct modality. The implementation follows the intermediate fusion paradigm, where modality-specific processing is preserved while enabling cross-modal learning through carefully designed fusion layers. The architecture is encapsulated in the `MultimodalFusion` class, which inherits from PyTorch's `nn.Module` base class, following the established pattern for neural network implementations in the PyTorch ecosystem.
+The multimodal fusion architecture is implemented as a PyTorch neural network module that orchestrates the integration of three specialized models, each designed to process a distinct modality. The implementation follows the intermediate fusion paradigm, where modality-specific processing is preserved while enabling cross-modal learning through carefully designed fusion layers. The architecture is encapsulated in the MultimodalFusion class, which inherits from PyTorch's nn.Module base class, following the established pattern for neural network implementations in the PyTorch ecosystem.
 
 ```python
 class MultimodalFusion(nn.Module):
@@ -272,7 +272,7 @@ The initialization process of the fusion model demonstrates several sophisticate
 
 A critical architectural decision is the selective freezing of model parameters. The implementation freezes the parameters of the audio and facial models while keeping the text model trainable. This design choice is motivated by the observation that the audio and facial models, being more complex and having been pretrained on large datasets, benefit from parameter stability during fusion training. The text model, being simpler and more adaptable, is allowed to fine-tune during the fusion process.
 
-The dimensionality standardization process employs a sophisticated projection strategy. Each modality's output is projected into a common 256-dimensional space through dedicated linear layers. This standardization is crucial for enabling effective feature fusion while preserving the discriminative power of each modality. The projection layers are implemented using PyTorch's `nn.Linear` module, which provides efficient matrix multiplication and bias addition operations.
+The dimensionality standardization process employs a sophisticated projection strategy. Each modality's output is projected into a common 256-dimensional space through dedicated linear layers. This standardization is crucial for enabling effective feature fusion while preserving the discriminative power of each modality. The projection layers are implemented using PyTorch's nn.Linear module, which provides efficient matrix multiplication and bias addition operations.
 
 The fusion network architecture implements a hierarchical structure through a sequence of fully connected layers, each followed by non-linear activation functions and dropout layers for regularization. The architecture begins with a concatenation of the projected features, resulting in a 768-dimensional vector (256 dimensions × 3 modalities). This concatenated representation is then processed through a series of transformations that progressively reduce dimensionality while learning complex cross-modal interactions. The implementation employs ReLU activation functions for introducing non-linearity and dropout layers with a rate of 0.3 for preventing overfitting.
 
@@ -308,7 +308,7 @@ The feature fusion process is implemented through a systematic sequence of opera
 
 ### Training Pipeline
 
-The training pipeline is implemented through a sophisticated class hierarchy that follows the Template Method design pattern. The `MultimodalFusionTrainer` class extends the abstract `BaseTrainer` class, inheriting common training functionality while implementing modality-specific training procedures. This design pattern promotes code reuse and maintains a consistent training interface across different model architectures.
+The training pipeline is implemented through a sophisticated class hierarchy that follows the Template Method design pattern. The MultimodalFusionTrainer class extends the abstract BaseTrainer class, inheriting common training functionality while implementing modality-specific training procedures. This design pattern promotes code reuse and maintains a consistent training interface across different model architectures.
 
 ```python
 class MultimodalFusionTrainer(BaseTrainer):
@@ -349,9 +349,9 @@ class MultimodalFusionTrainer(BaseTrainer):
         return total_train_loss / len(train_loader)
 ```
 
-The training process implements several advanced techniques for ensuring stable and effective model training. Gradient clipping is employed to prevent exploding gradients, with a maximum norm of 1.0. This technique is particularly important in multimodal fusion, where the combination of different feature spaces can lead to unstable gradients. The implementation uses PyTorch's `nn.utils.clip_grad_norm_` function, which efficiently computes and clips gradients while preserving their relative magnitudes.
+The training process implements several advanced techniques for ensuring stable and effective model training. Gradient clipping is employed to prevent exploding gradients, with a maximum norm of 1.0. This technique is particularly important in multimodal fusion, where the combination of different feature spaces can lead to unstable gradients. The implementation uses PyTorch's nn.utils.clip*grad_norm* function, which efficiently computes and clips gradients while preserving their relative magnitudes.
 
-The training loop implements a comprehensive monitoring and optimization strategy. Each training iteration is wrapped in a progress bar using the `tqdm` library, providing real-time feedback on training progress and loss values. The implementation maintains separate tracking of training and validation losses, enabling the detection of overfitting and the implementation of early stopping.
+The training loop implements a comprehensive monitoring and optimization strategy. Each training iteration is wrapped in a progress bar using the tqdm library, providing real-time feedback on training progress and loss values. The implementation maintains separate tracking of training and validation losses, enabling the detection of overfitting and the implementation of early stopping.
 
 ```python
 def train(self, train_loader, val_loader, n_epochs):

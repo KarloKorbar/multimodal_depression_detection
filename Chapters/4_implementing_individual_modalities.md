@@ -20,7 +20,7 @@ The Random Forest classifier was chosen for its several advantageous properties 
 
 ### Audio-Based Model
 
-The audio analysis utilizes Recurrent Neural Networks with LSTM cells to capture temporal dependencies in speech patterns. This architecture is particularly well-suited for processing sequential data and analyzing acoustic features that evolve over time. Our implementation uses a specialized variant of RNNs designed to handle the complex temporal patterns present in speech signals.
+The audio analysis utilizes Recurrent Neural Networks with LSTM cells to capture temporal dependencies in speech patterns. This architecture is particularly well-suited for processing sequential data and analyzing acoustic features that evolve over time. This implementation uses a specialized variant of RNNs designed to handle the complex temporal patterns present in speech signals.
 
 The audio model architecture consists of multiple recurrent layers with LSTM cells, allowing the network to learn long-term dependencies while avoiding the vanishing gradient problem common in traditional RNNs. The LSTM architecture provides significant benefits for audio processing: it effectively captures long-range dependencies in speech patterns, demonstrates robustness to varying input lengths, handles temporal features such as pitch, rhythm, and pause patterns effectively, and maintains gradient stability during training through gated memory cells.
 
@@ -66,7 +66,7 @@ The Random Forest classification component builds upon this optimized feature re
 
 ### Audio Model Implementation
 
-The audio model implementation features an attention-enhanced LSTM architecture, carefully crafted to capture the temporal dynamics of speech patterns. The implementation, housed in `models/audio_rnn.py`, comprises several sophisticated components working in concert:
+The audio model implementation features an attention-enhanced LSTM architecture, carefully crafted to capture the temporal dynamics of speech patterns. The implementation, housed in models/audio_rnn.py, comprises several sophisticated components working in concert:
 
 ```python
 class AudioRNN(nn.Module):
@@ -114,7 +114,7 @@ The classification pipeline culminates in a carefully structured sequence of tra
 
 ### Face Model Implementation
 
-The facial expression analysis system implements a sophisticated multi-stream architecture with integrated spatial and temporal attention mechanisms. The implementation, contained within `models/face_strnn.py`, represents a state-of-the-art approach to facial expression analysis:
+The facial expression analysis system implements a sophisticated multi-stream architecture with integrated spatial and temporal attention mechanisms. The implementation, contained within models/face_strnn.py, represents a state-of-the-art approach to facial expression analysis:
 
 ```python
 class SpatialAttention(nn.Module):
