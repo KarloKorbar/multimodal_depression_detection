@@ -2,27 +2,29 @@
 
 ## Introduction
 
-The analysis and preprocessing of multimodal data for depression detection presents unique challenges due to the diverse nature of the input signals and the need to maintain temporal alignment across different modalities. This chapter details approach used for data preparation, beginning with an exploration of the dataset's characteristics and proceeding through the implementation of a robust preprocessing pipeline.
+The analysis and preprocessing of multimodal data for mental health classification presents a challenge due to the diverse nature of the input signals and the need to maintain temporal alignment across different modalities. This chapter details approach used for data preparation, beginning with an exploration of the dataset's characteristics and proceeding through the implementation of the preprocessing pipeline.
 
-The methodology described herein addresses several key challenges inherent in multimodal depression detection: the synchronization of temporal data streams, the reduction of noise and irrelevant variations in the signals, and the extraction of meaningful features that capture depression-relevant indicators.
+The methodology described in this chapter addresses several key challenges inherent in multimodal mental health classification: the synchronization of temporal data streams, the reduction of noise and irrelevant variations in the signals, and the extraction of meaningful features that capture depression-relevant indicators.
 
 ## On the dataset used
 
 This study utilizes the Distress Analysis Interview Corpus - Wizard of Oz (DIAC-WOZ) dataset, which was collected as part of the Audio/Visual Emotion Challenge and Workshop (AVEC 2017). The dataset consists of video recordings of clinical interviews conducted with 189 participants, aged between 18 and 65 years, through a human-controlled virtual agent interface. During these interviews, participants responded to a standardized set of questions designed to assess their mental health status, particularly focusing on indicators of depression.
 
-The depression severity for each participant was evaluated using the Patient Health Questionnaire (PHQ-8), a validated clinical tool for depression screening. The PHQ-8 scores in the dataset range from 0 to 24, with higher scores indicating more severe depression symptoms. For binary classification purposes, participants with scores greater than or equal to 10 are categorized as showing signs of depression, while those with lower scores are categorized as not showing signs of depression. This threshold is consistent with clinical practice and previous research in automated depression detection.
+The depression severity for each participant was evaluated using the Patient Health Questionnaire (PHQ-8), a widely used clinical tool for depression screening. The PHQ-8 scores in the dataset range from 0 to 24, with higher scores indicating more severe depression symptoms. For binary classification purposes, participants with scores greater than or equal to 10 are categorized as showing signs of depression, while those with lower scores are categorized as not showing signs of depression. This threshold is consistent with clinical practice and previous research in automated depression detection.
 
-The dataset provides rich multimodal data for each interview session, including audio recordings, video recordings of facial expressions, and text transcripts. These recordings have been processed to extract various features: audio recordings are analyzed for acoustic properties and voice quality metrics, video recordings are processed to identify facial landmarks and action units, and transcripts are provided for linguistic analysis. This comprehensive multimodal approach allows for a thorough investigation of depression indicators across different channels of human communication.
+The dataset provides multimodal data for each interview session, including audio recordings, video recordings of facial expressions, and text transcripts. These recordings have been processed to extract various features: audio recordings are analyzed for acoustic properties and voice quality metrics, video recordings are processed to identify facial landmarks and action units, and textual transcripts are provided in plain text format for linguistic analysis. The multimodal nature of the datased aims to provide more rich contextual information that is inacsesable in a traditional questionarre format.
 
 ## Data Loading and Preprocessing Pipeline
 
-The preprocessing pipeline for this project is designed to handle multimodal data from various sources, including facial expressions, audio recordings, and text transcripts. The pipeline follows a modular architecture that separates data loading from preprocessing operations, allowing for flexible and maintainable code structure. This section describes the implementation details of the preprocessing pipeline, from file traversal to final feature extraction.
+A dedicated preprocessing pipeline was essential for this project due to the multimodal nature of the DIAC-WOZ dataset. In practical terms, most analytical and modeling tasks focus on a specific modality—such as text, audio, or facial expressions—rather than the entire dataset simultaneously. For instance, when developing and training models for the textual modality, only the files and features relevant to text analysis are required, while data from the audio and facial modalities can be disregarded. Furthermore, the presence of two time series modalities—audio and facial expressions—introduces additional challenges related to differing sampling rates and temporal alignment. By implementing a systematic preprocessing pipeline, the project ensures that modality-specific data can be correctly processed, while also providing robust solutions for harmonizing temporal features across modalities.
+
+The pipeline follows a modular architecture that separates data loading from preprocessing operations, following clean code design principles. This section describes the implementation details of the preprocessing pipeline, from file traversal to final feature extraction.
 
 ### File Structure and Data Organization
 
-The DIAC-WOZ dataset employs a hierarchical directory structure to organize the multimodal data collected from participant interviews. Each participant's data is stored in a dedicated directory named with a unique three-digit identifier followed by the suffix "\_P". This systematic organization ensures efficient data access and maintains clear separation between individual participants' recordings and derived features.
+The DIAC-WOZ dataset uses a hierarchical directory structure to organize the multimodal data collected from participant interviews. Each participant's data is stored in a dedicated directory named with a unique three-digit identifier followed by the suffix "\_P".
 
-Within each participant's directory, multiple files store different aspects of the recorded interview session. The naming convention for these files combines the participant's identifier with specific feature type indicators, creating a consistent and self-documenting structure. For example, a participant with ID "301" would have their audio recording stored as "301_AUDIO.wav" and their transcript as "301_TRANSCRIPT.csv". This standardized naming scheme facilitates automated processing and ensures reliable data access across the preprocessing pipeline.
+Within each participant's directory, multiple files store different features of the recorded interview session. The naming convention for these files combines the participant's identifier with specific feature type indicators. For example, a participant with ID "301" would have their audio recording stored as "301_AUDIO.wav" and their transcript as "301_TRANSCRIPT.csv". Each participants directory contains all of the data collected for each modality.
 
 ```
 DIAC-WOZ/
@@ -45,7 +47,8 @@ DIAC-WOZ/
 └── ...
 ```
 
-The dataset's files can be categorized into three primary modalities: text, audio, and facial expressions. Each modality encompasses several file types that capture different aspects of the participant's interview session. The text modality consists of timestamped interview transcripts stored in CSV format. The audio modality includes raw audio recordings in WAV format, along with derived features such as voice quality metrics (COVAREP.csv) and formant frequencies (FORMANT.csv). The facial expression modality comprises various feature files extracted using the CLNF (Constrained Local Neural Field) framework, including facial action units, landmarks in both 2D and 3D space, gaze direction vectors, and head pose estimations.
+The dataset's files can be categorized into three primary modalities: text, audio, and facial expressions. The modalities are mostly split up into multiple files with wach file representing a single feature of the modality with the exception of the extual modality that only has one file.
+The text modality consists of timestamped interview transcripts stored in CSV format. The audio modality includes raw audio recordings in WAV format, along with derived features such as voice quality metrics (COVAREP.csv) and formant frequencies (FORMANT.csv). The facial expression modality comprises various feature files extracted using the CLNF (Constrained Local Neural Field) framework, including facial action units, landmarks in both 2D and 3D space, gaze direction vectors, and head pose estimations.
 
 | Modality | Files               | Description                                          |
 | -------- | ------------------- | ---------------------------------------------------- |
@@ -60,17 +63,19 @@ The dataset's files can be categorized into three primary modalities: text, audi
 |          | CLNF_hog.bin        | Histogram of Oriented Gradients features             |
 |          | CLNF_pose.txt       | Head pose estimation (rotation, translation)         |
 
-This comprehensive organization of multimodal data provides a robust foundation for the subsequent preprocessing and analysis stages. The structured approach to data storage ensures reproducibility and facilitates the implementation of consistent processing pipelines across all participants' data.
+This organization of features makes it simple to retrieve information about a single participant, whether for all modalities or for a specific modality of interest. However, when the analysis requires data from a group of participants, particularly across a single modality, the process becomes more convoluted, needing traversal and searching of the file tree to locate and aggregate the relevant files.
+To simplify the data aggredation process, data loading was abstracted into a dedicated part of the preprocessing pipeline
 
-### Data loading architecture
+### Data loader architecture
 
-Given the non-trivial hierarchical folder structure of the database, a robust system is required to reliably traverse the file tree and retrieve the necessary files for any given requirement. The system must be flexible both in terms of file selection criteria and dataset coverage, allowing to either focus on specific modalities or utilize smaller subsets of the dataset during model development. This flexibility is particularly important when working with multimodal data, as it enables efficient experimentation with different feature combinations and facilitates iterative development of the preprocessing pipeline.
+The preprocessing and data loading system was designed to be flexible both in terms of file selection criteria and dataset coverage. It enables both selecting for specific modalities as well as retrieving any size subset when loading data, simplifying the preprocessing process and enabling faster model development on smaller subsets.
+Once data loading is complete, the system automatically applies the predefined preprocessing procedures for each file type present in the dataset. This ensures that, regardless of the modality or subset selected, all relevant files undergo consistent and modality appropriate preprocessing.
 
-The preprocessing architecture follows a modular design pattern that separates concerns between data loading and feature-specific processing. At its core, the system implements a generic data loading interface through the DataLoader class, which provides fundamental functionality for traversing the dataset structure and managing data access. This base class is then extended by modality-specific loaders that handle the unique requirements of text, audio, and facial expression data.
+The preprocessing architecture uses a generic data loading interface through the DataLoader class, which provides fundamental functionality for traversing the dataset structure and managing data access.
+This base class is then extended by modality-specific loaders (TextLoader, AudioLoader, and FaceLoader) that handle the unique requirements of each modality.
+Finally the actual preprocessing workflow in each of the modality specific loaders is handled by dedicated preprocessor classes for each file type of the modality. These classes handle the actual feature extraction and transformation.
 
-The architecture employs a three-tier preprocessing strategy. The first tier consists of the base DataLoader class, which manages file system operations and provides common utilities for data handling. The second tier comprises specialized loaders (TextLoader, AudioLoader, and FaceLoader) that inherit from the base class and implement modality-specific loading logic. The third tier contains dedicated preprocessor classes that handle the actual feature extraction and transformation for each modality.
-
-This hierarchical design enables efficient code reuse while maintaining the flexibility to handle the distinct characteristics of each data type. The separation between loading and processing logic also facilitates the addition of new feature types and processing methods without requiring modifications to the core loading infrastructure. Furthermore, the architecture includes robust error handling and data validation at each level, ensuring the reliability and consistency of the preprocessed features.
+This hierarchical design enables efficient code reuse while maintaining the flexibility to handle the distinct characteristics of each data type. The separation between loading and processing logic also simplifies the addition of new feature types and processing methods.
 
 ```plantuml
 @startuml PreprocessingPipeline
@@ -152,9 +157,22 @@ FaceLoader ..> FacePreprocessor : uses
 
 ### Data Loader Implementation
 
-The foundation of the preprocessing pipeline is built upon a hierarchical inheritance-based architecture, encapsulated within the DataLoader base class. This architectural decision emerged from the need to efficiently handle large-scale multimodal data while maintaining memory efficiency and providing a consistent interface across different modalities. The system's hierarchical approach to data management effectively abstracts the complexities of file system operations while providing a robust framework for data validation and preprocessing.
+As the main abstract class within the preprocessing pipeline, the DataLoader class is responsible for managing file system traversal and the retrieval of relevant data files from the hierarchical dataset structure.
+Its primary function is to abstract the complexities associated with navigating the filetree as well as offer utility functions for common tasks such as getting a balanced subset of the dataset of a specific size or functionality for iterating through the retreived files for simpler preprocessing down the line.
 
-Central to this implementation is the path mapping system, which employs a sophisticated directory traversal algorithm to establish comprehensive mappings between participant identifiers and their corresponding data files. This mapping mechanism plays a crucial role in maintaining data integrity and ensuring proper alignment between different modalities. The implementation utilizes a DataFrame-based approach for storing these mappings, leveraging pandas' efficient memory management and query capabilities to optimize data access and manipulation.
+Central to this implementation is the path mapping system, which uses a directory traversal algorithm to establish mappings between participant identifiers and their corresponding data files.
+
+For example when the get_path_map() function is called with the required files `["AUDIO.wav", "COVAREP.csv", "FORMANT.csv"]` and the folder IDs `["300", "301", "302"]`, the mapping system traverses the dataset directory, searching only within the specified participant folders. For each folder, it attempts to locate the requested files, constructing a mapping between participant IDs and the absolute paths to each required file. If a file is missing for a participant, the corresponding entry is set to `None`. The result is a DataFrame that provides a clear overview of which files are available for each participant and where they are located.
+
+When executed, the resulting mapping table might look something like this:
+
+| ID  | AUDIO                  | COVAREP                  | FORMANT                  |
+| --- | ---------------------- | ------------------------ | ------------------------ |
+| 300 | path/to/300_AUDIO.wav  | path/to/300_COVAREP.csv  | path/to/300_FORMANT.csv  |
+| 301 | path/to/3001_AUDIO.wav | None                     | path/to/3001_FORMANT.csv |
+| 302 | None                   | path/to/3002_COVAREP.csv | None                     |
+
+This table allows downstream processes to easily identify which files are present for each participant and to handle missing data appropriately, as well as greatly simplify any iterations through the required files.
 
 ```python
 def get_path_map(self, required_files: List[str] = [], folder_ids: Optional[List[int]] = None) -> pd.DataFrame:
@@ -182,7 +200,7 @@ def get_path_map(self, required_files: List[str] = [], folder_ids: Optional[List
     return pd.DataFrame(data)
 ```
 
-The feature extraction framework complements the path mapping system by implementing a modular approach to feature processing through inheritance. This framework demonstrates sophisticated software engineering principles, where each modality-specific loader (AudioLoader, FaceLoader, TextLoader) inherits from the base DataLoader class while defining its own feature map and required files. The implementation employs a feature mapping dictionary that creates associations between file types and their corresponding preprocessing functions and output prefixes, enabling flexible and extensible feature processing.
+The get_feature_subset_df() method complements the path mapping system by implementing a modular approach to feature processing through inheritance. This allows each modality-specific loader (AudioLoader, FaceLoader, TextLoader) to inherit from the base DataLoader class while still defining its own feature map and required files. The implementation employs a feature mapping dictionary that creates associations between file types and their corresponding preprocessing functions and output prefixes for flexible and extensible feature processing.
 
 ```python
 def _get_feature_subset_df(self, path_map: pd.DataFrame) -> pd.DataFrame:
@@ -203,9 +221,7 @@ def _get_feature_subset_df(self, path_map: pd.DataFrame) -> pd.DataFrame:
     return df
 ```
 
-The implementation architecture embodies several sophisticated design principles that significantly enhance its flexibility and robustness. The system leverages class inheritance to share common functionality through the base DataLoader class while enabling specialized behavior in modality-specific loaders. This approach provides an elegant solution for handling different types of data while maintaining code reusability. Furthermore, the architecture implements lazy evaluation, where features are processed only when needed and only for existing files, thereby optimizing memory usage and processing time. This optimization is particularly crucial when working with large multimodal datasets where not all features may be required for every analysis.
-
-The system's automatic feature organization capability represents another significant architectural achievement. Through a sophisticated prefix system, the implementation ensures that features from different sources remain distinctly identifiable while maintaining a consistent structure. This organization is exemplified in the implementation of modality-specific loaders, as demonstrated in the following code:
+The system's automatic feature organization capability represents another significant architectural achievement. Each modality-specific loader—such as the AudioLoader, FaceLoader, and TextLoader—leverages the modularity of the base DataLoader by defining its own feature map and required files tailored to the characteristics of its modality. These loaders utilize the get_feature_subset_df() method to systematically process only the relevant files, applying the appropriate preprocessing functions as specified in their feature maps. For example, the AudioLoader class specifies a feature map that associates each audio-related file type (such as AUDIO, FORMANT, and COVAREP) with its corresponding preprocessing function and output prefix, and lists the required files for audio analysis. This design ensures that features from different sources remain distinctly identifiable and consistently structured, while also enabling extensibility for future modalities or feature types. By encapsulating modality-specific logic within dedicated loaders and centralizing feature extraction through a unified interface, the system achieves both organizational clarity and robust scalability.
 
 ```python
 class AudioLoader(DataLoader):
@@ -219,49 +235,55 @@ class AudioLoader(DataLoader):
         self.required_files = ["AUDIO.wav", "FORMANT.csv", "COVAREP.csv"]
 ```
 
-The synthesis of inheritance-based architecture and feature extraction framework creates a sophisticated pipeline for handling multimodal data. This architecture facilitates system extensibility by allowing new modality loaders to be added through inheritance from the base DataLoader class. The clear separation of concerns between the base class and specialized loaders enhances maintainability, while the standardized processing pipeline ensures reproducibility across different experimental runs.
+The system also handles dealing with PHQ-8 scores. Through the base DataLoader class the implementation provides automatic score loading, witch is not only used for retreiving results data but also for finding balanced subsets of the dataset, allowing smoother developement of the mdoels and training pipline later on in the developement process.
 
-The system's integration with PHQ-8 depression scores represents a particularly noteworthy achievement. Through the base DataLoader class, the implementation provides automatic score loading and binary classification threshold application. This integration is fundamental for maintaining proper alignment between input features and their corresponding depression severity labels throughout the preprocessing pipeline.
+In summary, the DataLoader implementation simplifies the data preprocessing workflow in a fexible and extensible manner. By leveraging an inheritance-based architecture, the system allows for integration of new modality loaders while maintaining a clear separation of concerns between the base class and specialized loaders. The standardized processing pipeline ensures consistent handling of multimodal data and reliable alignment between input features and PHQ-8 depression scores.
 
-In conclusion, the implementation demonstrates a careful balance between architectural sophistication and practical flexibility. It provides a robust foundation for addressing the complex preprocessing requirements of multimodal depression detection while maintaining clean and maintainable code architecture. The system's design choices reflect a deep understanding of both software engineering principles and the specific challenges inherent in multimodal data processing for mental health applications.
+### Feature Preprocessing and Standardization
 
-## Feature Preprocessing and Standardization
+Following the implementation of the abstract DataLoader and its modality-specific extensions, the next stage in the preprocessing pipeline involves the use of dedicated preprocessor modules for each modality. These preprocessors are organized into three separate files, one each for text, audio, and facial data, and are responsible for handling the preprocessing of all file types associated with their respective modalities. Each preprocessor module contains specialized methods for processing the various data formats present in the dataset, as well as any necessary supporting utility functions. The following section details the most significant preprocessing steps employed for each modality, highlighting the strategies used to ensure the integrity and relevance of the extracted features.
 
-The preprocessing phase of multimodal depression detection data presents unique challenges due to the diverse nature of the input signals. Following the exploratory analysis phase, a comprehensive preprocessing strategy was developed to address the specific characteristics identified in each modality while preserving depression-relevant signal components. This strategy encompasses temporal alignment, feature normalization, and dimensionality reduction, each carefully tailored to maintain the integrity of depression-relevant indicators.
+#### NLP Preprocessing
 
-### NLP Preprocessing
+The text preprocessing pipeline implements a comprehensive approach to natural language processing, designed to extract meaningful linguistic features while preserving the semantic content relevant to depression detection.
 
-The text preprocessing pipeline implements a comprehensive approach to natural language processing, designed to extract meaningful linguistic features while preserving the semantic content relevant to depression detection. The implementation employs a modular architecture that effectively separates concerns between data loading, preprocessing, and model training components. This separation enables flexible experimentation with different preprocessing strategies while maintaining a consistent interface for downstream analysis.
+The NLP pipline, like all other preprocessing pipelines in this project, starts with the Loader class in this case specefically the TextLoader class. It handles all of the basic file retreival and basic preprocessing tasks, providing the pipeline with a starting dafarame to work off.
 
-The TextLoader class serves as the primary interface for text data ingestion and initial normalization. Through its integration with the base DataLoader architecture, it provides a standardized approach to handling interview transcripts while maintaining compatibility with the broader multimodal processing pipeline. The implementation leverages a feature mapping system that associates specific preprocessing functions with their corresponding output prefixes, ensuring consistent feature organization across the entire dataset.
+After the Loader class has done its job, the text preprocessing pipeline applies a sequence of natural language processing techniques. The initial text normalization phase standardizes the input by converting text to lowercase and removing special characters, establishing a consistent foundation for subsequent processing steps. This standardization ensures reliable feature extraction across different interview sessions and participants.
 
-The text preprocessing pipeline incorporates a sophisticated sequence of natural language processing techniques, each carefully selected to enhance the extraction of depression-relevant linguistic patterns. The initial text normalization phase standardizes the input by converting text to lowercase and removing special characters, establishing a consistent foundation for subsequent processing steps. This standardization is crucial for ensuring reliable feature extraction across different interview sessions and participants.
-
-The pipeline then implements strategic stop word removal, eliminating common words that carry minimal semantic significance while preserving the essential content of participant responses. This process is particularly important for depression detection, as it helps focus the analysis on meaningful linguistic patterns rather than common grammatical elements. The implementation carefully balances the removal of non-informative terms with the preservation of potentially significant emotional and behavioral descriptors.
+The pipeline then implements strategic stop word removal, eliminating common words that carry minimal semantic significance while preserving the essential content of participant responses. This process is particularly important for depression detection, as it helps focus the analysis on meaningful linguistic patterns rather than common grammatical elements.
 
 Word form normalization through lemmatization represents another critical component of the preprocessing pipeline. By reducing words to their base or dictionary form using WordNet's lexical database, the system effectively groups related word forms while maintaining their semantic relationships. This normalization is especially valuable for capturing consistent patterns in emotional expression and behavioral descriptions across different linguistic contexts.
 
-The final stage of the text preprocessing pipeline implements n-gram generation, capturing both unigrams and bigrams to preserve important word relationships and contextual information. This approach enables the detection of meaningful phrases and expressions that may indicate depressive states, while maintaining the flexibility to identify both individual significant terms and their contextual relationships. The combination of these preprocessing techniques creates a robust foundation for subsequent feature extraction and analysis, ensuring that the resulting linguistic features effectively capture depression-relevant patterns in participant responses.
+The final stage of the text preprocessing pipeline implements n-gram generation, capturing both unigrams and bigrams to preserve important word relationships and contextual information. This approach enables the detection of meaningful phrases and expressions that may indicate depressive states, while maintaining the flexibility to identify both individual significant terms and their contextual relationships.
 
-### Temporal Feature Alignment
+The combination of these preprocessing techniques ensures that the resulting linguistic features effectively capture depression-relevant patterns in participant responses.
 
-The synchronization of multimodal data streams represents a fundamental challenge in depression detection research, as the temporal relationships between different behavioral indicators can provide crucial diagnostic information. The preprocessing pipeline addresses this challenge through a sophisticated resampling strategy that ensures temporal coherence across all modalities while preserving the essential dynamics of depression-related behaviors.
+#### Temporal Feature Alignment
 
-The synchronization process employs a carefully selected common sampling frequency of 100ms, determined through detailed signal analysis to balance temporal resolution with computational efficiency. This sampling rate was chosen based on a comprehensive analysis of the temporal characteristics of different behavioral modalities. It effectively preserves the rapid dynamics of facial movements and speech characteristics while maintaining alignment with slower-changing behavioral patterns that may indicate depressive states.
+Since two of the three modalities in this dataset are represented by time series data, it is crutial to correctly handle the temporal nature of these modalities and avoid any issues that may arrise.
 
-The implementation of temporal alignment incorporates specialized handling for discrete text events, ensuring proper temporal correspondence with continuous audio and visual signals. This approach recognizes the inherent differences in the temporal nature of different modalities while maintaining the integrity of their relationships. The system employs sophisticated interpolation techniques to handle potential gaps in the data, ensuring continuous temporal coverage across all modalities.
+In the AudioLoader and FaceLoader classes, the resulting datasets are double indexed; one index being the participant ID and the other index being the timestamp. This ensures that later on the moels have acces to the temporal relationships between different behavioral indicators, witch can provide crucial information for classification
 
-The temporal alignment process is particularly crucial for capturing the complex interactions between different behavioral indicators of depression. For instance, the synchronization of facial expressions with speech patterns enables the detection of subtle incongruences between verbal content and emotional expression, which may serve as important markers of depressive states. Similarly, the alignment of audio features with text transcripts facilitates the analysis of speech rhythm and prosody in relation to linguistic content.
+Given the tools available for collecting data of these two modalities (audio data being collected via a microphone and facial data via a camera) the two modalities are collected using two different sampling rates. This will be a problem later on when combining the two modalities using multimodal fusion so the two modalities need to be aligned temporally.
 
-The implementation includes robust mechanisms for handling temporal misalignments and data quality issues. These mechanisms employ statistical validation techniques to identify and address potential synchronization errors, ensuring the reliability of the temporal relationships between different modalities. The system also implements sophisticated error recovery strategies that maintain data integrity while minimizing the impact of potential synchronization issues on the overall analysis.
+To ensure consistancy and simplicity the temporal allingment is done as part of the preprocessing steps in the AudioLoader and FaceLoader classes through a resampling strategy that ensures temporal coherence across all modalities while preserving the essential dynamics of depression-related behaviors.
+
+The synchronization process employs a common sampling frequency of 100ms, determined through signal analysis to balance temporal resolution with computational efficiency. It preserves the rapid dynamics of facial movements and speech characteristics while maintaining alignment with slower-changing behavioral patterns that may indicate depressive states.
+
+The system employs interpolation techniques to handle potential gaps in the data, ensuring continuous temporal coverage across all modalities.
+
+The temporal alignment process is particularly crucial for capturing the complex interactions between different behavioral indicators of depression. For instance, the synchronization of facial expressions with speech patterns enables the detection of subtle inconsistancies between verbal content and emotional expression, which may serve as important markers of depressive states. Similarly, the alignment of audio features with text transcripts facilitates the analysis of speech rhythm and prosody in relation to linguistic content.
+
+The implementation includes mechanisms for handling temporal misalignments and data quality issues. These mechanisms employ statistical validation techniques to identify and address potential synchronization errors, ensuring the reliability of the temporal relationships between different modalities.
 
 This comprehensive approach to temporal alignment provides a solid foundation for subsequent feature extraction and analysis. By ensuring proper synchronization across all modalities, the system enables the detection of complex behavioral patterns that may indicate depressive states, while maintaining the computational efficiency necessary for practical applications in depression detection.
 
-### Feature Normalization and Scaling
+#### Feature Normalization and Scaling
 
-The diverse nature of multimodal depression indicators necessitates a sophisticated approach to feature normalization and scaling that preserves the clinically relevant aspects of each modality while ensuring comparability across different features. The preprocessing pipeline implements a comprehensive normalization strategy that addresses the unique characteristics of each data type while maintaining the integrity of depression-relevant signal components.
+The diverse nature of multimodal depression indicators necessitates an approach to feature normalization and scaling that preserves the clinically relevant aspects of each modality while ensuring comparability across different features. The preprocessing pipeline implements a normalization strategy that addresses the unique characteristics of each data type while maintaining the integrity of depression-relevant signal components.
 
-In the audio domain, the normalization strategy addresses the challenges posed by varying recording conditions and individual differences in speech production. The implementation employs amplitude normalization to account for differences in recording levels while preserving the perceptually relevant aspects of speech through logarithmic scaling of frequency-based features. This approach ensures that the analysis focuses on meaningful variations in speech characteristics rather than technical differences in recording conditions.
+In the audio domain, the normalization strategy addresses the challenges posed by varying recording conditions and individual differences in speech production. The implementation employs amplitude normalization to account for differences in recording levels while preserving the perceptually relevant aspects of speech through logarithmic scaling of frequency-based features, ensuring that the analysis focuses on meaningful variations in speech characteristics rather than technical differences in recording conditions.
 
 The COVAREP features, which capture various aspects of voice quality, undergo z-score normalization to ensure comparability across different vocal parameters while maintaining their relative relationships. This normalization is particularly important for depression detection, as it enables the identification of subtle variations in voice quality that may indicate depressive states, independent of individual differences in baseline vocal characteristics.
 
@@ -273,31 +295,17 @@ Head pose data requires specialized normalization techniques due to its geometri
 
 The textual features present unique normalization challenges due to their discrete nature and the varying lengths of participant responses. TF-IDF normalization is implemented for word frequency features, effectively balancing the importance of common and rare terms while accounting for document length variations. This normalization is complemented by length normalization for sequence-based features, ensuring that varying response durations do not unduly influence the analysis.
 
-The normalization strategy also incorporates modality-specific considerations for handling missing data and outliers. The implementation employs sophisticated imputation techniques that preserve the statistical properties of the data while ensuring the reliability of the normalized features. This approach is particularly important for maintaining the integrity of the analysis when dealing with incomplete or noisy data, which is common in clinical settings.
+By applying these techniques the preprocessing pipeline adresses the unique characteristics of each modality while maintaining the integrity of depresion relevant signal components
 
-This comprehensive approach to feature normalization and scaling provides a robust foundation for subsequent analysis and modeling. By carefully addressing the unique characteristics of each modality while maintaining the integrity of depression-relevant signal components, the preprocessing pipeline enables the effective detection of depression indicators across different behavioral channels.
+#### PCA and Rolling Window
 
-### Feature Selection and Dimensionality Reduction
+The temporal nature of the audio and facial modalities introduces significant computational challenges as the dataset scales. With each additional participant, the number of temporal samples increases substantially, particularly given the high sampling rates of audio and video recordings. This growth is further compounded by the high dimensionality of the feature space, especially in the facial modality where numerous geometric and appearance-based features are tracked simultaneously. Consequently, the combination of temporal density and feature dimensionality necessitates an efficient approach to data compression—one that preserves the essential information required for depression classification while reducing computational overhead.
 
-The high-dimensional nature of multimodal depression data necessitates a sophisticated approach to feature selection and dimensionality reduction that preserves clinically relevant information while managing computational complexity. A multi-stage process is employed that combines statistical analysis with clinical domain knowledge to identify the most informative features for depression detection.
+To address these challenges, the preprocessing pipeline adopts a two-stage strategy that combines Principal Component Analysis (PCA) with rolling window statistics. PCA is first applied as a dimensionality reduction technique, projecting the high-dimensional feature space onto a lower-dimensional subspace that captures the most significant variations in the data. This transformation is particularly effective for modalities such as facial features, where many variables are highly correlated due to the inherent constraints of facial movement and expression. In this project, PCA is performed separately for each modality, ensuring that the most relevant patterns are retained. The resulting principal components are then saved for later use in the multimodal preprocessing pipeline.
 
-The initial feature selection phase employs a comprehensive correlation analysis to identify and remove redundant features while preserving the underlying information content. This analysis considers both linear and non-linear relationships between features, ensuring that the selection process captures complex interactions that may be relevant to depression detection. The implementation utilizes advanced correlation metrics, including Pearson's correlation coefficient for linear relationships and mutual information for non-linear dependencies.
+Following dimensionality reduction, the rolling window approach is employed to provide temporal summarization of the time series data. This technique involves segmenting the continuous time series into fixed-duration windows—either overlapping or non-overlapping—within which summary statistics such as the mean and variance are computed. By aggregating features over these windows, the pipeline effectively captures the change of behavioral indicators while reducing the temporal resolution. In practice, rolling window statistics are systematically applied in the modality-specific loaders after temporal alignment and resampling. This approach ensures that the resulting feature set is both computationally managabe and contains valuable information.
 
-The feature selection process is further enhanced through the application of ANOVA F-tests, which quantify each feature's discriminative power with respect to depression severity. This statistical approach enables the identification of features that show significant differences between depressed and non-depressed individuals, while accounting for the inherent variability in behavioral data. The implementation carefully considers the multiple testing problem, employing appropriate correction methods to ensure the reliability of the selected features.
-
-Mutual information analysis plays a crucial role in capturing non-linear relationships between features and depression indicators. This approach is particularly valuable for identifying complex behavioral patterns that may not be apparent through traditional linear analysis. The implementation employs sophisticated estimation techniques to accurately quantify the mutual information between features and depression severity, enabling the selection of features that provide unique information about depressive states.
-
-Principal Component Analysis (PCA) serves as the cornerstone of the dimensionality reduction strategy, with separate implementations for each modality to preserve their unique characteristics. The variance threshold for component selection is determined through careful analysis of the cumulative explained variance, balanced against the need for clinical interpretability. This approach ensures that the reduced feature space maintains strong connections to clinically relevant behavioral patterns while achieving significant dimensionality reduction.
-
-The temporal aspects of depression manifestation are captured through sophisticated feature extraction techniques that analyze behavioral patterns across multiple time scales. Rolling window statistics enable the capture of dynamic patterns, providing insights into both immediate manifestations of depressive symptoms and longer-term behavioral changes. The implementation employs adaptive window sizes to account for the varying temporal characteristics of different behavioral indicators.
-
-Frequency domain analysis complements the temporal analysis by identifying periodic behavioral patterns that may indicate depressive states. This approach enables the detection of cyclic variations in behavior that may not be apparent in the time domain. The implementation utilizes advanced spectral analysis techniques to identify significant frequency components while filtering out noise and irrelevant variations.
-
-The feature selection and dimensionality reduction process also incorporates clinical domain knowledge to ensure the interpretability and clinical relevance of the selected features. This integration of statistical analysis with clinical expertise enables the identification of features that not only show strong statistical relationships with depression but also align with established clinical understanding of depressive symptoms.
-
-The implementation includes robust validation mechanisms to ensure the reliability of the feature selection process. Cross-validation techniques are employed to assess the stability of selected features across different subsets of the data, while permutation tests verify the statistical significance of the feature selection results. These validation procedures are particularly important for ensuring the generalizability of the selected features to new data.
-
-This comprehensive approach to feature selection and dimensionality reduction provides a solid foundation for subsequent modeling and analysis. By carefully balancing statistical rigor with clinical relevance, the preprocessing pipeline enables the effective detection of depression indicators while maintaining computational efficiency and interpretability.
+Together, the integration of PCA and rolling window statistics within the preprocessing pipeline provides a robust solution for feature selection and dimensionality reduction. This approach reduces the computational cost of model training while ensuring that the most important and depression-relevant data are preserved for subsequent analysis.
 
 ## Exploratory Data Analysis
 
@@ -315,9 +323,7 @@ def text_preprocessing(text):
     return ' '.join(words)
 ```
 
-Subsequent analyses explored the distribution of word frequencies and the prevalence of specific linguistic themes. Visualization techniques such as word clouds and frequency plots were employed to highlight the most common tokens and phrases, revealing distinctive patterns in language use across different levels of depression severity. For instance, the construction of word clouds provided an intuitive overview of dominant themes, while bar plots of token frequencies allowed for a more granular examination of lexical choices.
-
-Additionally, the distribution of response lengths was analyzed to assess the relationship between verbal expressiveness and depression indicators. Histograms of text lengths demonstrated that participants with higher PHQ-8 scores often produced shorter and less elaborate responses, suggesting a potential link between depressive symptomatology and reduced verbal output. These findings underscored the importance of both content and structure in linguistic analysis for depression detection.
+Subsequent analyses explored the distribution of word frequencies and the prevalence of specific linguistic themes. Visualization techniques such as word clouds and frequency plots were employed to highlight the most common tokens and phrases, revealing distinctive patterns in language use across different levels of depression severity. Additionally, the distribution of response lengths was analyzed to assess the relationship between verbal expressiveness and depression indicators. Histograms of text lengths demonstrated that participants with higher PHQ-8 scores often produced shorter and less elaborate responses, suggesting a potential link between depressive symptomatology and reduced verbal output. These findings underscored the importance of both content and structure in linguistic analysis for depression detection.
 
 ### Audio Modality
 
@@ -331,15 +337,15 @@ def analyze_audio_features(df: pd.DataFrame) -> None:
         temporal_patterns = df.groupby('ID')[feature].mean()
 ```
 
-Temporal analyses of amplitude and energy distributions revealed systematic variations in speech rhythm and intensity, which were found to correlate with depression severity. Participants exhibiting higher levels of depressive symptoms often demonstrated reduced speech energy and flatter prosodic contours, consistent with clinical observations of psychomotor retardation in depression.
+Temporal analyses of amplitude and energy distributions revealed systematic variations in speech rhythm and intensity, which were found to correlate with depression severity. Participants exhibiting higher levels of depressive symptoms often demonstrated reduced speech energy, consistent with clinical observations of psychomotor retardation in depression.
 
-The investigation of formant frequencies provided further insight into the articulatory dynamics of speech. By comparing average formant values across subjects, the analysis identified subtle shifts in vocal tract configuration that may be indicative of emotional state. Moreover, the COVAREP-derived features enabled a detailed exploration of voice quality parameters, such as fundamental frequency modulation and spectral envelope characteristics. Correlation matrices of these features highlighted intricate interdependencies, suggesting that depression may manifest through coordinated changes in multiple aspects of vocal production.
+The investigation of formant frequencies provided further insight into the dynamics of speech. By comparing average formant values across subjects, the analysis identified subtle shifts in vocal tract configuration that may be indicative of emotional state. Moreover, the COVAREP-derived features enabled a detailed exploration of voice quality parameters, such as fundamental frequency modulation and spectral envelope characteristics.
 
 ### Facial Expression Modality
 
-The facial expression modality was subjected to an in-depth analysis of both static and dynamic facial behaviors. The EDA encompassed the examination of facial landmarks, action units (AUs), and head pose dynamics, leveraging the rich feature set extracted via the CLNF framework.
+The facial expression modality was subjected to an in depth analysis of both static and dynamic facial behaviors. The EDA encompassed the examination of facial landmarks, action units (AUs), and head pose dynamics, fully utilising the feature set extracted via the CLNF framework.
 
-Landmark analysis involved tracking 68 facial points over time, enabling the quantification of facial movement patterns and expressivity. Principal Component Analysis (PCA) was applied to the landmark data to identify the primary modes of facial variation, as illustrated below:
+Landmark analysis involved tracking 68 facial points over time, enabling the quantification of facial movement patterns and expressivity. Principal Component Analysis (PCA) was applied to the landmark data to identify the primary modes of facial variation, as shown below:
 
 ```python
 def analyze_landmarks(df: pd.DataFrame) -> None:
@@ -349,11 +355,11 @@ def analyze_landmarks(df: pd.DataFrame) -> None:
     landmark_pca = pca.fit_transform(landmark_data)
 ```
 
-The resulting principal components, or "eigenfaces," captured coordinated patterns of facial movement, with the first few components accounting for the majority of variance in facial behavior. Visualization of these components revealed that participants with higher depression scores tended to exhibit reduced facial mobility and less pronounced expressions.
+The resulting principal components captured coordinated patterns of facial movement, with the first few components accounting for the majority of variance in facial behavior. Visualization of these components revealed that participants with higher depression scores tended to exhibit reduced facial mobility and less pronounced expressions.
 
-The analysis of facial action units focused on the distribution and temporal dynamics of muscle activations. Violin plots and correlation heatmaps were used to characterize the intensity and co-activation patterns of AUs, revealing that certain combinations of muscle movements were strongly associated with depressive states. Notably, the temporal correlation between specific AUs provided valuable insights into the dynamics of emotional expression, with depressed individuals often displaying less synchronized and less variable facial activity.
+The analysis of facial action units focused on the role of muscle activations. Notably, the temporal correlation between specific AUs provided valuable insights into the dynamics of emotional expression, with depressed individuals often displaying less synchronized and less variable facial activity.
 
-Head pose analysis further enriched the behavioral profile by examining rotational and translational movements. Statistical and spectral analyses of head motion revealed that participants with higher depression severity exhibited reduced movement frequency and amplitude, consistent with the psychomotor slowing observed in clinical populations.
+Head pose analysis continued by examining rotational and translational movements. Statistical and spectral analyses of head motion revealed that participants with higher depression severity exhibited reduced movement frequency and amplitude, consistent with the psychomotor slowing observed in clinical populations.
 
 ### Cross-Modal and Temporal Analysis
 
@@ -369,10 +375,10 @@ def _process_temporal_features(self, df: pd.DataFrame, timestamp_col: str, ds_fr
     return df_resampled.groupby(level="ID").rolling(rw_size, on=df_resampled.index.get_level_values("TIMESTAMP")).mean()
 ```
 
-This approach revealed that depression-related behaviors often manifest as both immediate deviations and persistent alterations in expressive patterns. For instance, the temporal alignment of facial, audio, and textual features enabled the identification of incongruences between verbal content and nonverbal expression, which may serve as important diagnostic markers.
+This approach revealed that depression-related behaviors often manifest as both immediate deviations and persistent alterations in expressive patterns. For instance, the temporal alignment of facial, audio, and textual features enabled the identification of inconsistencies between verbal content and nonverbal expression, which may serve as important diagnostic markers.
 
 ### Summary of Findings
 
-The exploratory data analysis phase culminated in a nuanced understanding of how depression manifests across different behavioral modalities. The analyses revealed that depression is characterized by a constellation of linguistic, acoustic, and facial features, each contributing unique and complementary information. Linguistically, depression was associated with reduced verbal output and the use of specific emotional descriptors. Acoustically, it manifested as diminished speech energy and altered voice quality. Facially, it was marked by reduced expressivity and altered patterns of muscle activation and head movement.
+The exploratory data analysis phase culminated in a understanding of how depression manifests across different behavioral modalities. The analyses revealed that depression is characterized by a combination of linguistic, acoustic, and facial features, each contributing information. Linguistically, depression was associated with reduced verbal output and the use of specific emotional descriptors. Acoustically, it manifested as diminished speech energy and altered voice quality. Facially, it was marked by reduced expressivity and altered patterns of muscle activation and head movement.
 
-Crucially, the EDA demonstrated that a multimodal approach to depression detection is likely to yield more robust and reliable results than single-modality analyses, as it captures the complex and multifaceted nature of depressive symptomatology. These insights provided essential guidance for the design of preprocessing pipelines and the development of subsequent modeling
+Crucially, the EDA demonstrated that a multimodal approach to depression detection is likely to yield more robust and reliable results than single-modality analyses, as it captures the complex and multifaceted nature of depressive symptomatology.
