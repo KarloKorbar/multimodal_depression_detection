@@ -84,6 +84,10 @@ class BaseTrainer(ABC):
             print(f"Resuming training from epoch {start_epoch}")
 
         for epoch in range(start_epoch, n_epochs):
+            # Clear output in Jupyter notebook
+            from IPython.display import clear_output
+            clear_output(wait=True)
+
             # Training
             train_loss = self.train_epoch(train_loader)
             self.train_losses.append(train_loss)
